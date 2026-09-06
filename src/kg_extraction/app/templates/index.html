@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Grafo de Conhecimento — Casos Clínicos (MultiCaRe)</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+  <header>
+    <h1>Grafo de Conhecimento de Casos Clínicos</h1>
+    <p class="subtitle">Projeto 1 — NLP 2026 · extração 100% baseada em técnicas clássicas (regras, regex, dicionários)</p>
+  </header>
+
+  <div class="toolbar">
+    <label for="case-select">Caso:</label>
+    <select id="case-select">
+      {% for c in cases %}
+        <option value="{{ c.case_id }}">{{ c.case_id }} ({{ c.gender }}, {{ c.age }} anos)</option>
+      {% endfor %}
+    </select>
+
+    <div class="level-toggle" id="level-toggle">
+      <button data-level="basic" class="level-btn active">Básico</button>
+      <button data-level="intermediate" class="level-btn">Intermediário</button>
+      <button data-level="detailed" class="level-btn">Detalhado</button>
+    </div>
+  </div>
+
+  <div class="level-description" id="level-description"></div>
+
+  <div class="main">
+    <div id="cy"></div>
+    <aside id="details-panel">
+      <h3>Detalhes</h3>
+      <p id="details-content">Clique em um nó ou aresta para ver os atributos.</p>
+      <h3>Texto do caso</h3>
+      <p id="case-text" class="case-text"></p>
+    </aside>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/graph.js') }}"></script>
+</body>
+</html>

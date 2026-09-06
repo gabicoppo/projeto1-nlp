@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Saídas geradas pelo pipeline (reprodutíveis a partir de data/raw + src/)
+data/interim/*
+data/processed/*
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+
+.DS_Store
+.vscode/
+.idea/

@@ -1,7 +1,7 @@
-# Projeto `<Título em Português — ex: Grafos de Conhecimento Multinível para Casos Clínicos>`
-# Project `<Title in English>`
+# Projeto `<Projeto 1 - Grafos de Conhecimento Multinível para Casos Clínicos>`
+# Project `<Project 1>`
 
-> Equipe: `<Nome 1>`, `<Nome 2>`, `<Nome 3>`, `<Nome 4>`, `<Nome 5>`
+> Equipe: `Gabriela Coppo`, `João Rafael`
 
 ## Slides
 

@@ -1,0 +1,8 @@
+pandas>=2.0
+flask>=3.0
+pytest>=8.0
+
+# Opcionais, caso a equipe queira trocar as implementações "clássicas" caseiras
+# (preprocessing.py) por bibliotecas de NLP tradicionais mais completas:
+# nltk>=3.8
+# spacy>=3.7        # usar apenas o tokenizer/rules, sem modelos de NER estatísticos

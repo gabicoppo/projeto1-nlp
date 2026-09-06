@@ -1,0 +1,14 @@
+entity_type,canonical_label,ontology,code,ontology_label
+Symptom,abdominal pain,SNOMED_CT,21522001,Abdominal pain
+Symptom,nausea,SNOMED_CT,422587007,Nausea
+Symptom,fever,SNOMED_CT,386661006,Fever
+Symptom,jaundice,SNOMED_CT,18165001,Jaundice
+Exam,computed tomography,LOINC,LP29708-2,CT imaging study
+Exam,serum lipase,LOINC,3040-3,Lipase [Enzymatic activity/volume] in Serum or Plasma
+Exam,c-reactive protein,LOINC,1988-5,C reactive protein [Mass/volume] in Serum or Plasma
+Diagnosis,acute pancreatitis,ICD10,K85.9,Acute pancreatitis
+Diagnosis,chronic pancreatitis,ICD10,K86.1,Other chronic pancreatitis
+Diagnosis,diabetes mellitus,ICD10,E11,Type 2 diabetes mellitus
+Diagnosis,hypertension,ICD10,I10,Essential (primary) hypertension
+Diagnosis,pancreatic pseudocyst,ICD10,K86.3,Pseudocyst of pancreas
+Diagnosis,gastric outlet obstruction,MeSH,D015431,Gastric Outlet Obstruction
