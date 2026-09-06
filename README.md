@@ -1,5 +1,5 @@
-# Projeto `<Projeto 1 - Grafos de Conhecimento Multinível para Casos Clínicos>`
-# Project `<Project 1>`
+# Projeto `Projeto 1 - Grafos de Conhecimento Multinível para Casos Clínicos`
+# Project `Project 1 - Multilevel Knowledge Graphs for Clinical Cases`
 
 > Equipe: `Gabriela Coppo`, `João Rafael`
 
