@@ -26,6 +26,7 @@ from kg_extraction.features.preprocessing import split_sentences
 from kg_extraction.features.relation_rules import (
     classify_diagnosis_relation,
     classify_exam_finding_relation,
+    classify_symptom_relation,
 )
 from kg_extraction.features.value_unit_extraction import (
     build_value_unit_pattern,
@@ -174,10 +175,15 @@ def extract_case_graph(case_row) -> tuple[list[dict], list[dict]]:
 
         for em in entity_matches:
             if em.entity_type == "Symptom":
+                relation = classify_symptom_relation(sentence, em.start)
                 node_id, _ = get_or_create_entity("Symptom", em.canonical_label)
-                add_edge(patient_id, node_id, "PRESENTS_WITH")
-                supporting_ids_this_sentence.append(node_id)
-                clinical_entity_ids_this_sentence.append(node_id)
+                add_edge(patient_id, node_id, relation)
+                # um sintoma NEGADO ("denies fever") não deve apoiar um
+                # diagnóstico nem herdar região anatômica da mesma frase —
+                # isso implicaria que o achado é real, o oposto do texto.
+                if relation == "PRESENTS_WITH":
+                    supporting_ids_this_sentence.append(node_id)
+                    clinical_entity_ids_this_sentence.append(node_id)
 
             elif em.entity_type == "Exam":
                 node_id, _ = get_or_create_entity("Exam", em.canonical_label)
@@ -191,10 +197,16 @@ def extract_case_graph(case_row) -> tuple[list[dict], list[dict]]:
                 node_type = "History" if relation == "HAS_HISTORY" else "Diagnosis"
                 node_id, _ = get_or_create_entity(node_type, em.canonical_label)
                 add_edge(patient_id, node_id, relation)
-                if node_type == "Diagnosis":
+                # um diagnóstico NEGADO ("ruled out acute pancreatitis") não
+                # deve virar alvo de SUPPORTS nem de TREATED_BY — do
+                # contrário o grafo diria que outros achados da mesma frase
+                # sustentam um diagnóstico que o texto descarta, ou que um
+                # tratamento citado depois trata algo que foi excluído.
+                if relation == "DIAGNOSED_WITH":
                     diagnosis_ids_this_sentence.append(node_id)
                     last_diagnosis_id = node_id
-                clinical_entity_ids_this_sentence.append(node_id)
+                if relation != "DENIES":
+                    clinical_entity_ids_this_sentence.append(node_id)
 
             elif em.entity_type == "Treatment":
                 node_id, _ = get_or_create_entity("Treatment", em.canonical_label)

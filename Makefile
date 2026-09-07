@@ -6,15 +6,15 @@ install:
 
 ## Roda o pipeline de extração completo (data/raw -> data/processed)
 pipeline:
-	PYTHONPATH=src python -m kg_extraction.pipeline
+	PYTHONPATH=src python3 -m kg_extraction.pipeline
 
 ## Sobe a aplicação web de visualização (requer `make pipeline` antes)
 app:
-	PYTHONPATH=src FLASK_APP=kg_extraction.app.app flask run --debug
+	PYTHONPATH=src FLASK_APP=kg_extraction.app.app python3 -m flask run --debug
 
 ## Roda a suíte de testes
 test:
-	PYTHONPATH=src pytest tests/ -v
+	PYTHONPATH=src python3 -m pytest tests/ -v
 
 ## Remove artefatos gerados
 clean:

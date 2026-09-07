@@ -1,5 +1,5 @@
 """Aplicação web (Flask) para visualizar o grafo de conhecimento extraído,
-em 3 níveis de abstração escolhidos pelo usuário.
+em 2 níveis de abstração escolhidos pelo usuário.
 
 Rodar (a partir da raiz do repositório, com PYTHONPATH=src):
     export PYTHONPATH=src

@@ -14,13 +14,22 @@ baseados em técnicas clássicas de NLP (nenhum modelo de linguagem é usado
 nesta etapa):
 
 ```
-cases.csv ──▶ pré-processamento ──▶ NER por gazetteer ──▶ extração de   ──▶ regras de   ──▶ grafo canônico ──▶ 3 views por
-              (tokenização,          (dicionários de       valores/unidades   relação        (nós + arestas)    abstração
-              normalização,          sintomas, exames,     (regex + lista     (histórico vs.                    (básico/
-              stop-words)            diagnósticos,         de unidades)       diagnóstico,                       intermediário/
-                                     tratamentos)                             SUPPORTS,                          detalhado)
-                                                                              TREATED_BY, ...)
+cases.csv ──▶ segmentação de ──▶ NER por gazetteer ──▶ extração de   ──▶ regras de   ──▶ grafo canônico ──▶ 2 views por
+              frases (regex)     (dicionários de       valores/unidades   relação        (nós + arestas)    abstração
+                                  sintomas, exames,     (regex + lista     (histórico vs.                    (básico/
+                                  diagnósticos,         de unidades)       diagnóstico,                       detalhado)
+                                  tratamentos,                             DENIES, SUPPORTS,
+                                  regiões anatômicas)                      TREATED_BY, ...)
 ```
+
+Nota sobre técnicas clássicas exploradas e descartadas: chegamos a implementar
+tokenização de palavras, normalização e um stemmer ingênuo (histórico em
+`src/kg_extraction/features/preprocessing.py`), mas eles nunca entraram no
+caminho de extração — testamos plugá-los na frente do NER por gazetteer e do
+regex de valor/unidade, e ambos quebrariam: sinônimos multi-palavra com
+stopword interna (ex.: `"acute on chronic liver failure"`) e a adjacência
+número+unidade (`"96mg/dl"`) que o regex depende. Removemos o código morto em
+vez de deixá-lo desconectado do pipeline.
 
 Pontos-chave da abordagem:
 
@@ -64,14 +73,17 @@ nós + arestas do enunciado):
 
 **Nós** (`node_id`, `case_id`, `type`, `label`, `attributes`) — tipos usados:
 `Patient`, `History`, `Symptom`, `Exam`, `ExamResult`, `Value`, `Unit`,
-`ReferenceRange`, `Diagnosis`, `Treatment`, `OntologyConcept`.
+`ReferenceRange`, `Diagnosis`, `Treatment`, `AnatomicalSite`, `OntologyConcept`.
 
 **Arestas** (`edge_id`, `case_id`, `source_id`, `target_id`, `relation`,
-`attributes`) — relações usadas: `HAS_HISTORY`, `PRESENTS_WITH`,
+`attributes`) — relações usadas: `HAS_HISTORY`, `PRESENTS_WITH`, `DENIES`
+(sintoma/diagnóstico negado — "denies fever", "no evidence of jaundice",
+"ruled out X" — em vez de tratar a negação como se o achado fosse real),
 `UNDERWENT_EXAM`, `HAS_RESULT`, `HAS_VALUE`, `HAS_UNIT`,
-`HAS_REFERENCE_RANGE`, `DIAGNOSED_WITH`, `SUPPORTS`, `TREATED_BY`,
-`UNDERWENT_TREATMENT`, `CONFIRMS`/`EXCLUDES`, `LINKED_TO` (para vocabulários
-controlados).
+`HAS_REFERENCE_RANGE`, `DIAGNOSED_WITH`, `SUPPORTS`, `LOCATED_IN` (região
+anatômica de um Symptom/Exam/Diagnosis/Treatment citado na mesma frase),
+`TREATED_BY`, `UNDERWENT_TREATMENT`, `CONFIRMS`/`EXCLUDES`, `LINKED_TO`
+(para vocabulários controlados).
 
 > Coloque aqui a imagem do modelo lógico de propriedades da equipe (ver
 > [modelo de base](https://docs.google.com/presentation/d/10RN7bDKUka_Ro2_41WyEE76Wxm4AioiJOrsh6BRY3Kk/edit?usp=sharing)),
@@ -81,19 +93,21 @@ controlados).
 
 - Comparar, por caso, a "densidade" do grafo detalhado vs. básico como proxy
   de complexidade clínica.
-- Cruzar `major_mesh_terms` de `metadata.csv` com os `Diagnosis` extraídos
-  para validar a qualidade da extração contra uma anotação externa.
+- ~~Cruzar `major_mesh_terms` de `metadata.csv` com os `Diagnosis`
+  extraídos para validar a qualidade da extração contra uma anotação
+  externa.~~ **Feito** — ver `scripts/validate_against_metadata.py` e a
+  seção Resultados acima.
 - Identificar quais `Exam` mais frequentemente co-ocorrem (via `SUPPORTS`)
   com cada `Diagnosis`, sugerindo protocolos diagnósticos recorrentes.
 - Medir cobertura do gazetteer (quantas sentenças não geraram nenhuma
   entidade) para orientar onde expandir os dicionários.
 
-> Complementar com as análises efetivamente realizadas pela equipe.
+> Complementar com as demais análises efetivamente realizadas pela equipe.
 
 ## Ferramentas
 
 - **Python** (pandas) para o pipeline de extração.
-- Técnicas clássicas de NLP implementadas from-scratch (tokenização/normalização
+- Técnicas clássicas de NLP implementadas from-scratch (segmentação de frases
   por regex, gazetteers, regex de valores/unidades, regras de relação) —
   sem bibliotecas de NER estatístico/neural, conforme exigido nesta etapa.
 - **Flask** + **Cytoscape.js** para a visualização web interativa multinível.
@@ -101,13 +115,73 @@ controlados).
 
 ## Resultados
 
-> Descrever e discutir os resultados após rodar o pipeline completo
-> (`make pipeline`) sobre os 56 casos da amostra: nº de nós/arestas por
-> tipo, exemplos de grafos considerados bem-sucedidos e mal-sucedidos,
-> limitações observadas do gazetteer/regex.
->
-> Incluir capturas de tela da aplicação web nos 3 níveis de abstração
-> (colocar as imagens em `assets/images/`).
+Números do grafo canônico (nível detalhado) rodando `make pipeline` sobre
+os 56 casos da amostra:
+
+**Nós — 3934 no total**
+
+| tipo | nº | | tipo | nº |
+|---|---|---|---|---|
+| OntologyConcept | 1281 | | Treatment | 180 |
+| AnatomicalSite | 429 | | Diagnosis | 157 |
+| ExamResult | 415 | | Patient | 56 |
+| Value | 415 | | History | 19 |
+| Unit | 415 | | | |
+| Exam | 285 | | | |
+| Symptom | 282 | | | |
+
+**Arestas — 4214 no total**
+
+| relação | nº | | relação | nº |
+|---|---|---|---|---|
+| LINKED_TO | 1281 | | DENIES | 118 |
+| LOCATED_IN | 627 | | DIAGNOSED_WITH | 118 |
+| HAS_RESULT/HAS_VALUE/HAS_UNIT | 415 cada | | SUPPORTS | 93 |
+| UNDERWENT_EXAM | 285 | | UNDERWENT_TREATMENT | 62 |
+| PRESENTS_WITH | 221 | | HAS_HISTORY | 19 |
+| TREATED_BY | 139 | | CONFIRMS | 6 |
+
+### Validação contra anotação externa (`scripts/validate_against_metadata.py`)
+
+Cruzamos os `Diagnosis` extraídos com os `mesh_terms`/`major_mesh_terms`
+que a própria PubMed atribuiu a cada artigo (metadata.csv) — a análise que
+esta seção já pedia. Resultado salvo em
+`data/processed/validation_against_metadata.csv` (todos os 56 casos, não
+só os validáveis, para ficar transparente qual fração do dataset dá pra
+comparar dessa forma):
+
+- **56 casos no total**: 0 sem artigo correspondente em `metadata.csv`,
+  **50 com metadata mas sem nenhum termo de doença listado no
+  `mesh_terms`** (a indexação da PubMed é rala — a maioria dos artigos só
+  tem check-tags como "Case Reports"/"Humans", sem termo de doença
+  específico), **6 validáveis**.
+- Nesses 6 casos: **2 de 14** termos de doença indexados pela PubMed
+  também foram extraídos pelo pipeline (14,3%). Investigamos os dois
+  motivos principais desse número baixo (não é simplesmente "o gazetteer
+  falhou"):
+  1. **A indexação reflete o artigo inteiro, não só o `case_text`.** Ex.:
+     `PMC9387390_01` é indexado com "Gastric Outlet Obstruction", mas essa
+     frase não aparece em lugar nenhum do trecho de caso que temos — o
+     texto só descreve o achado clínico (*"causing extrinsic narrowing of
+     the second portion of the duodenum"*) que levaria a esse diagnóstico,
+     provavelmente concluído no abstract/discussão do artigo completo.
+  2. **A PubMed indexa pela categoria geral da árvore MeSH; nosso pipeline
+     acerta o diagnóstico específico.** Ex.: `PMC5137649_01` é indexado com
+     "Stomach Diseases" (categoria pai), mas o pipeline extraiu
+     corretamente `"gastric duplication cyst"` — o diagnóstico específico
+     do caso, que é filho de "Stomach Diseases" na árvore do MeSH. Uma
+     comparação por string exata conta isso como falha, quando na
+     realidade a extração foi mais precisa que o rótulo de indexação.
+
+Conclusão: o número bruto (14,3%) **subestima** a qualidade real da
+extração — parte das "falhas" é o pipeline sendo mais específico que o
+padrão-ouro, não menos capaz. Ainda assim, o primeiro motivo (indexação
+baseada no artigo completo) é uma limitação real e esperada: nossa
+extração só vê o trecho de `case_text`, não o artigo completo.
+
+> Falta: exemplos visuais de grafos bem-sucedidos/mal-sucedidos e capturas
+> de tela da aplicação web nos 2 níveis de abstração (colocar em
+> `assets/images/`).
 
 ## Como Modelos de Linguagem foram Usados
 

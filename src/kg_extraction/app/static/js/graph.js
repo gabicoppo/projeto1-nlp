@@ -1,6 +1,5 @@
 const LEVEL_DESCRIPTIONS = {
   basic: "Nível básico — leitura rápida do caso: cada exame aparece com seu resultado agregado, sem detalhamento adicional. Pensado para o médico assistente que quer entender o caso do paciente de forma direta.",
-  intermediate: "Nível intermediário — mantém a leitura simples do nível básico, mas liga os diagnósticos aos códigos de vocabulário controlado (ICD-10/SNOMED/MeSH), úteis para reforçar a certeza diagnóstica em um caso complexo.",
   detailed: "Nível detalhado — grafo completo: valores, unidades e faixas de referência viram nós próprios, e todas as entidades relevantes são ligadas a vocabulários controlados. Pensado para quem estuda o caso em profundidade.",
 };
 

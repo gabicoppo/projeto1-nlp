@@ -36,5 +36,5 @@ ONTOLOGY_LINKS_CSV = VOCAB_DIR / "ontology_links.csv"
 NODES_CSV = PROCESSED_DIR / "nodes.csv"
 EDGES_CSV = PROCESSED_DIR / "edges.csv"
 
-# Três níveis de abstração derivados do grafo canônico (usados pela visualização)
-ABSTRACTION_LEVELS = ("basic", "intermediate", "detailed")
+# Dois níveis de abstração derivados do grafo canônico (usados pela visualização)
+ABSTRACTION_LEVELS = ("basic", "detailed")

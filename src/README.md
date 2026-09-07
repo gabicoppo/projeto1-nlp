@@ -32,7 +32,7 @@ make app
 ```
 
 Acesse http://127.0.0.1:5000. Selecione um caso no menu e alterne entre os
-níveis **Básico / Intermediário / Detalhado**.
+níveis **Básico / Detalhado**.
 
 ## Rodar os testes
 
@@ -45,11 +45,11 @@ make test
 | Módulo | Responsabilidade |
 |---|---|
 | `data/make_dataset.py` | Carrega `cases.csv` / `metadata.csv` |
-| `features/preprocessing.py` | Tokenização, normalização, stop-words, lematização (regras) |
+| `features/preprocessing.py` | Segmentação de frases (regras); mantém `STOPWORDS` reaproveitado por `scripts/build_units_from_ncit.py` |
 | `features/gazetteer_ner.py` | Reconhecimento de entidades por dicionários controlados |
 | `features/value_unit_extraction.py` | Regex para valores numéricos, unidades e faixas de referência |
 | `features/relation_rules.py` | Regras de classificação de relações (histórico vs. diagnóstico, achados) |
 | `graph/canonical_graph.py` | Orquestra tudo acima em um grafo canônico por caso (nós/arestas) |
-| `graph/views.py` | Deriva os 3 níveis de abstração a partir do grafo canônico |
+| `graph/views.py` | Deriva os 2 níveis de abstração a partir do grafo canônico |
 | `pipeline.py` | Script de ponta a ponta (todos os casos → CSVs em `data/processed/`) |
 | `app/` | Aplicação Flask + Cytoscape.js para visualização interativa |
