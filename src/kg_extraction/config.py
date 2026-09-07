@@ -27,6 +27,7 @@ GAZETTEERS = {
     "Exam": VOCAB_DIR / "exams.txt",
     "Diagnosis": VOCAB_DIR / "diagnoses.txt",
     "Treatment": VOCAB_DIR / "treatments.txt",
+    "AnatomicalSite": VOCAB_DIR / "anatomy.txt",
 }
 UNITS_FILE = VOCAB_DIR / "units.txt"
 ONTOLOGY_LINKS_CSV = VOCAB_DIR / "ontology_links.csv"

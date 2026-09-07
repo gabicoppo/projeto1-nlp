@@ -16,7 +16,7 @@ entenda o impacto de cada uma no grafo final e possa ajustá-las.
 
 import re
 
-HISTORY_TRIGGER = re.compile(r"\bhistory of\b", re.IGNORECASE)
+HISTORY_TRIGGER = re.compile(r"\bhistory (of)?\b", re.IGNORECASE)
 EXCLUDE_TRIGGER = re.compile(r"\bexclud(ed|ing|es)?\b", re.IGNORECASE)
 CONFIRM_TRIGGER = re.compile(r"\bconfirm(ed|ing|s)?\b", re.IGNORECASE)
 

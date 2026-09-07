@@ -34,6 +34,7 @@ NODE_COLORS = {
     "ReferenceRange": "#bae6fd",
     "Diagnosis": "#dcfce7",
     "Treatment": "#fef9c3",
+    "AnatomicalSite": "#fed7aa",
     "OntologyConcept": "#f3e8ff",
 }
 

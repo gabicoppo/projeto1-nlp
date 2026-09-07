@@ -265,6 +265,20 @@ def main():
         action="store_true",
         help="Preserva termos já existentes em --out que não vieram do MeSH (soma sinônimos em vez de sobrescrever).",
     )
+    parser.add_argument(
+        "--exclude-canonical",
+        action="append",
+        default=[],
+        help=(
+            "Rótulo canônico a remover do resultado (repita a flag pra vários). Uso: um "
+            "termo do MeSH que, checado contra o corpus real, se mostrou um homógrafo de "
+            "palavra comum do inglês sem nenhum uso correto — ex.: '--exclude-canonical back' "
+            "porque a palavra solta 'back' apareceu 6/6 vezes como advérbio ('came back') no "
+            "corpus, nunca como região anatômica. Não é filtro formal (não tem campo na fonte "
+            "pra isso, ao contrário do termType=AB dos units) — é uma exclusão pontual, "
+            "evidenciada por contagem real, documentada aqui em vez de editada à mão no .txt."
+        ),
+    )
     args = parser.parse_args()
 
     categories = [c.strip() for c in args.category.split(",") if c.strip()]
@@ -278,6 +292,14 @@ def main():
     if not terms:
         print(f"Nenhum termo encontrado para o(s) prefixo(s) '{args.category}'. Verifique o(s) código(s) da categoria.", file=sys.stderr)
         sys.exit(1)
+
+    for canonical in args.exclude_canonical:
+        canonical = canonical.strip().lower()
+        if canonical in terms:
+            del terms[canonical]
+            print(f"  --exclude-canonical: removido '{canonical}'")
+        else:
+            print(f"  --exclude-canonical: '{canonical}' não estava no resultado (nada a remover)", file=sys.stderr)
 
     mesh_canonical_count = len(terms)
     if args.keep_manual:

@@ -57,6 +57,7 @@ _TYPE_PREFIX = {
     "ReferenceRange": "RR",
     "Diagnosis": "D",
     "Treatment": "T",
+    "AnatomicalSite": "A",
     "OntologyConcept": "O",
 }
 
@@ -168,18 +169,22 @@ def extract_case_graph(case_row) -> tuple[list[dict], list[dict]]:
         entity_matches = find_entities_in_sentence(sentence, _GAZETTEER_MATCHER, sent_idx)
         diagnosis_ids_this_sentence = []
         supporting_ids_this_sentence = []
+        anatomy_ids_this_sentence = []       # AnatomicalSite citados nesta frase
+        clinical_entity_ids_this_sentence = []  # Symptom/Exam/Diagnosis/Treatment desta frase, p/ LOCATED_IN
 
         for em in entity_matches:
             if em.entity_type == "Symptom":
                 node_id, _ = get_or_create_entity("Symptom", em.canonical_label)
                 add_edge(patient_id, node_id, "PRESENTS_WITH")
                 supporting_ids_this_sentence.append(node_id)
+                clinical_entity_ids_this_sentence.append(node_id)
 
             elif em.entity_type == "Exam":
                 node_id, _ = get_or_create_entity("Exam", em.canonical_label)
                 add_edge(patient_id, node_id, "UNDERWENT_EXAM")
                 last_exam_id = node_id
                 supporting_ids_this_sentence.append(node_id)
+                clinical_entity_ids_this_sentence.append(node_id)
 
             elif em.entity_type == "Diagnosis":
                 relation = classify_diagnosis_relation(sentence, em.start)
@@ -189,6 +194,7 @@ def extract_case_graph(case_row) -> tuple[list[dict], list[dict]]:
                 if node_type == "Diagnosis":
                     diagnosis_ids_this_sentence.append(node_id)
                     last_diagnosis_id = node_id
+                clinical_entity_ids_this_sentence.append(node_id)
 
             elif em.entity_type == "Treatment":
                 node_id, _ = get_or_create_entity("Treatment", em.canonical_label)
@@ -199,6 +205,14 @@ def extract_case_graph(case_row) -> tuple[list[dict], list[dict]]:
                     add_edge(last_diagnosis_id, node_id, relation)
                 else:
                     add_edge(patient_id, node_id, relation)
+                clinical_entity_ids_this_sentence.append(node_id)
+
+            elif em.entity_type == "AnatomicalSite":
+                # Não liga direto ao Patient (achar que "paciente tem fígado" não é um
+                # fato clínico) — é um modificador de outra entidade citada na mesma
+                # frase (ver cross-join LOCATED_IN logo abaixo, mesmo padrão do SUPPORTS).
+                node_id, _ = get_or_create_entity("AnatomicalSite", em.canonical_label)
+                anatomy_ids_this_sentence.append(node_id)
 
         # valores numéricos + unidade (ex.: "850 U/L") -> associados ao último Exam da frase
         value_matches = find_values(sentence, _UNIT_PATTERN, sent_idx)
@@ -228,6 +242,15 @@ def extract_case_graph(case_row) -> tuple[list[dict], list[dict]]:
             for diag_id in diagnosis_ids_this_sentence:
                 for support_id in supporting_ids_this_sentence:
                     add_edge(support_id, diag_id, "SUPPORTS")
+
+        # relação LOCATED_IN: mesma heurística de co-ocorrência do SUPPORTS, mas
+        # para região anatômica — "abdominal ultrasound" na mesma frase que
+        # "pancreatic pseudocyst" liga pseudocyst -> pancreas (a entidade clínica
+        # aponta para o local, não o contrário).
+        if anatomy_ids_this_sentence:
+            for anatomy_id in anatomy_ids_this_sentence:
+                for entity_id in clinical_entity_ids_this_sentence:
+                    add_edge(entity_id, anatomy_id, "LOCATED_IN")
 
         # achados de exame de imagem (CONFIRMS/EXCLUDES/REVEALS) — heurística leve:
         # se a frase tem um verbo-gatilho e um Exam, e menciona um Diagnosis já
